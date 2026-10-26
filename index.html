@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Emergency & Resuscitation Suite - CDSS</title>
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --bg-card: #131d31;
+            --border-color: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-primary); padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; }
+        h1 { font-size: 1.4rem; color: var(--accent-blue); display: flex; align-items: center; gap: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
+        .card h2 { font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; color: var(--text-secondary); }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-secondary); font-weight: 600; }
+        input, select { width: 100%; padding: 10px 12px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 0.95rem; }
+        input:focus, select:focus { outline: none; border-color: var(--accent-blue); }
+        button { background: var(--accent-blue); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 1rem; cursor: pointer; width: 100%; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .timer-box { font-size: 2.2rem; font-weight: bold; text-align: center; background: var(--bg-main); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 10px; color: var(--accent-red); letter-spacing: 2px; }
+        .alert-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 1rem; }
+        .level-1 { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent-red); color: #fca5a5; }
+        .level-2 { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-yellow); color: #fde047; }
+        .action-list { list-style-type: none; }
+        .action-list li { padding: 10px 0; border-bottom: 1px dashed var(--border-color); font-size: 0.95rem; }
+        .action-list li:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 نظام دعم قرارات الطوارئ (ED-CDSS)</h1>
+            <span id="system-status" style="color: var(--accent-green); font-weight: bold; font-size: 0.9rem;">● النظام جاهز ومستقر</span>
+        </header>
+
+        <div class="grid">
+            <!-- قسم المدخلات الطبية -->
+            <div class="card">
+                <h2>إدخال العلامات الحيوية والتقييم السريري</h2>
+                <div class="form-group">
+                    <label>الشكوى الرئيسية (Chief Complaint)</label>
+                    <select id="complaint">
+                        <option value="cardiac_arrest">توقف قلبي ريئوي (Cardiac Arrest / Code Blue)</option>
+                        <option value="chest_pain">ألم حاد في الصدر (Acute Chest Pain)</option>
+                        <option value="dyspnea">ضيق تنفس شديد (Severe Dyspnea)</option>
+                        <option value="trauma">إصابات متعددة / نزيف حاد (Major Trauma)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>معدل النبض (Heart Rate - bpm)</label>
+                    <input type="number" id="hr" value="125">
+                </div>
+                <div class="form-group">
+                    <label>ضغط الدم الانقباضي (Systolic BP - mmHg)</label>
+                    <input type="number" id="sbp" value="75">
+                </div>
+                <div class="form-group">
+                    <label>تشبع الأكسجين (SpO2 - %)</label>
+                    <input type="number" id="spo2" value="82">
+                </div>
+                <div class="form-group">
+                    <label>مستوى الوعي (GCS Score: 3-15)</label>
+                    <input type="number" id="gcs" value="7">
+                </div>
+                <button onclick="runTriageSystem()">تحليل الحالة وإطلاق البروتوكول الفوري</button>
+            </div>
+
+            <!-- قسم المخرجات وخوارزميات الإنقاذ -->
+            <div>
+                <div class="card">
+                    <h2>التصنيف الإكلينيكي والإجراءات الفورية</h2>
+                    <div id="triage-result" class="alert-box level-1">
+                        أدخل البيانات واضغط على زر التحليل لبدء البروتوكول.
+                    </div>
+                    <ul id="action-steps" class="action-list" style="margin-top: 12px;">
+                        <li>بانتظار إدخال بيانات المريض...</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h2>عداد الإنعاش والجرعات (ACLS/ATLS Timer)</h2>
+                    <div class="timer-box" id="timer">00:00</div>
+                    <button style="margin-top: 15px; background: #334155;" onclick="resetTimer()">إعادة ضبط العداد</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let seconds = 0;
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            seconds = 0;
+            timerInterval = setInterval(() => {
+                seconds++;
+                let mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                let secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function resetTimer() {
+            startTimer();
+        }
+
+        function runTriageSystem() {
+            startTimer();
+            let complaint = document.getElementById('complaint').value;
+            let hr = parseInt(document.getElementById('hr').value);
+            let sbp = parseInt(document.getElementById('sbp').value);
+            let spo2 = parseInt(document.getElementById('spo2').value);
+            let gcs = parseInt(document.getElementById('gcs').value);
+
+            let resultDiv = document.getElementById('triage-result');
+            let stepsList = document.getElementById('action-steps');
+
+            // منطق خوارزمي دقيق لفرز الحالات الحرجة
+            if (complaint === 'cardiac_arrest' || sbp < 85 || gcs < 9 || spo2 < 85) {
+                resultDiv.className = "alert-box level-1";
+                resultDiv.innerHTML = "🚨 تصنيف الحالة: Level 1 - استجابة حرجة فورية (Resuscitation)";
+                stepsList.innerHTML = `
+                    <li>⚡ <strong>الخطوة 1:</strong> بدء إنعاش قلبي رئوي عالي الجودة (CPR) بمعدل 100-120 ضغطة/دقيقة.</li>
+                    <li>💉 <strong>الخطوة 2:</strong> حقن أدرينالين (Epinephrine 1mg IV) كل 3 إلى 5 دقائق.</li>
+                    <li>🔌 <strong>الخطوة 3:</strong> توصيل جهاز الصدمات (Defibrillator) وفحص نظم القلب (Shockable vs Non-shockable).</li>
+                    <li>🌬️ <strong>الخطوة 4:</strong> تأمين مجرى الهواء فوراً بإنبوب حنجري (Endotracheal Tube) والتهوية بأكسجين 100%.</li>
+                `;
+            } else {
+                resultDiv.className = "alert-box level-2";
+                resultDiv.innerHTML = "⚠️ تصنيف الحالة: Level 2 - حالة عالية الخطورة (Emergent)";
+                stepsList.innerHTML = `
+                    <li>氧 <strong>الخطوة 1:</strong> تركيب قناع أكسجين وضمان تدفق مستقر (O2 Mask / Non-Rebreather).</li>
+                    <li>🩺 <strong>الخطوة 2:</strong> فتح خط وريدي محيطي (IV Line) وسحب عينات عاجلة (CBC, ABG, Cardiac Markers).</li>
+                    <li>📊 <strong>الخطوة 3:</strong> عمل تخطيط قلب فوري 12-lead ECG ومتابعة العلامات الحيوية كل 5 دقائق.</li>
+                `;
+            }
+        }
+
+        // تشغيل التايمر افتراضياً
+        startTimer();
+    </script>
+</body>
+</html>
